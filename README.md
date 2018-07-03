@@ -1,0 +1,1 @@
+This is basic minesweeper created in React.
