@@ -1,123 +1,29 @@
-import React from 'react';
-// import update from 'immutability-helper';
-
-import { Button, Panel, Form, FormGroup, FormControl, ControlLabel, Modal, Col, Glyphicon, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import React, { Component } from 'react';
 
 import './Game.css';
-import bombIcon from './img/bomb-icon.png';
-import flagIcon from './img/flag-icon.png';
-import questionMarkIcon from './img/question-mark-icon.png';
-import timeIcon from './img/time-icon.png';
 
-const cellState = {
-    HIDDEN: 'HIDDEN',
-    VISIBLE: 'VISIBLE',
-    MARKED_AS_BOMB: 'MARKED_AS_BOMB',
-    MARKED_AS_UNCERTAIN: 'MARKED_AS_UNCERTAIN'
-}
+import Board from './components/Board';
+import ControlPanel from './components/ControlPanel';
+import InfoPanel from './components/InfoPanel';
+import VisualPanel from './components/VisualPanel';
 
-const Icon = props => <img className="icon" src={props.src} alt={props.alt ? props.alt : ''} />;
+import classNames from 'classnames';
 
-class Cell extends React.Component {
-    render() {
-        let classname = 'cell';
-        if (this.props.cssClass) {
-            classname += ' ' + this.props.cssClass;
-        }
+// import update from 'immutability-helper';
 
-        return (
-            <button className={classname}
-                onContextMenu={e => this.props.onContextMenu(e)}
-                onDoubleClick={e => this.props.onDblClick(e)}
-                onClick={e => this.props.onClick(e)}>
-                {this.props.value}
-            </button>);
-    }
-}
+import cellState from './helpers/cellState';
 
-class Board extends React.Component {
 
-    renderSingleCell(index) {
-        let { value, mode, cssClass } = this.props.cells[index];
-
-        const cssClasses = [cssClass];
-
-        switch (mode) {
-            case cellState.MARKED_AS_BOMB: value = <Icon src={flagIcon} alt="Flag" />; break;
-            case cellState.MARKED_AS_UNCERTAIN: value = <Icon src={questionMarkIcon} alt="Uncertain" />; break;
-            case cellState.HIDDEN:
-                if (!this.props.showAll) {
-                    value = '';
-                    break;
-                }
-            default:
-                cssClasses.push('cell-revealed');
-
-                if (value === this.props.bombSign) {
-                    value = <Icon src={bombIcon} alt="Bomb" />
-                    cssClasses.push('cell-bomb')
-                } else if (value === 0) {
-                    value = '';
-                } else if (value > 0 && value <= 8) {
-                    cssClasses.push('cell-' + value);
-                }
-        }
-
-        return (
-            <Cell
-                key={index}
-                cssClass={cssClasses.join(' ')}
-                value={value}
-                onClick={e => this.props.onClick(index, e)}
-                onDblClick={e => this.props.onDblClick(index, e)}
-                onContextMenu={e => this.props.onContextMenu(index, e)} />
-        )
-    }
-
-    render() {
-        const rows = this.props.rows;
-        const cols = this.props.cols;
-        const board = [];
-
-        let k = 0;
-        let row = [];
-
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < cols; j++) {
-                row.push(this.renderSingleCell(k++));
-            }
-
-            board.push(<div key={k} className='row'>{row}</div>);
-            row = [];
-        }
-
-        return (
-            <div className="board">
-                {board}
-            </div>
-        )
-
-    }
-}
-
-class Game extends React.Component {
-
-    // cells = [];
-    // defaultRows = 20;
-    // defaultCols = 20;
-    // defaultBombs = 70;
+class Game extends Component {
 
     // clicks = 0;
     // leftButtonDown = false;
     // rightButtonDown = false;
 
-    timerID;
-
     checkWinner = false;
 
+    // TODO: use enum (maybe)
     bombSign = 'B';
-    markedAsBombSign = 'T';
-    markedAsUncertain = 'U';
 
     constructor(props) {
         super(props);
@@ -125,12 +31,14 @@ class Game extends React.Component {
         const arr = Array(this.props.rows * this.props.cols).fill(undefined);
         this.initBoard(arr);
 
+        const { cols, rows, bombs } = this.props;
+
         this.state = {
-            cols: this.props.cols,
-            rows: this.props.rows,
-            bombs: this.props.bombs,
+            cols,
+            rows,
+            bombs,
             cells: arr,
-            bombsLeft: this.props.bombs,
+            bombsLeft: bombs,
             locked: false,
             paused: false,
             finished: false,
@@ -139,10 +47,23 @@ class Game extends React.Component {
         };
 
         this.revealBombs = this.revealBombs.bind(this);
-        this.startNewGame = this.startNewGame.bind(this);
+        this.resetGame = this.resetGame.bind(this);
         this.togglePause = this.togglePause.bind(this);
         this.toggleReveal = this.toggleReveal.bind(this);
     }
+
+
+//     shouldComponentUpdate(props, nextState) {
+//         // console.log('should');
+// return true;
+//         // do not update if dimensions of the board were changed. Wait for another setState
+//         // return (
+//         //     this.state.cols === nextState.cols &&
+//         //     this.state.rows === nextState.rows &&
+//         //     this.state.bombs === nextState.bombs
+//         // );
+
+//     }
 
     componentDidMount() {
         // const cells = document.querySelectorAll('.cell');
@@ -191,7 +112,7 @@ class Game extends React.Component {
         for (let i = 0; i < arr.length; i++) {
             arr[i] = {
                 // either bomb or number indicating amount of bombs in neighbourhood. This is constant after init and could be placed as simple class field.
-                value: undefined,       
+                value: undefined,
                 mode: cellState.HIDDEN, // state of the cell - hidden, visible, marked as bomb, marked as uncertain
                 cssClass: ''            // additional css class for this cell
             }
@@ -201,7 +122,7 @@ class Game extends React.Component {
     // Fills provided array with bombs
     addBombs(arr, excludedCell) {
         const bombs = this.state.bombs;
-        console.log(bombs);
+        // console.log(bombs);
 
         let bombCounter = 0;
         let index;
@@ -277,26 +198,54 @@ class Game extends React.Component {
         });
     }
 
-    startNewGame() {
+    resetGame(boardSettings) {
         if (this.inProgress() && !window.confirm('The game has not been finished. Are you sure you want to start a new game?')) {
             return;
         }
 
-        const arr = this.state.cells.slice();
+        // check if provided object is valid
+        let validObject;
+        if (boardSettings && 
+            typeof boardSettings === 'object' && 
+            Object.keys(boardSettings).length === 3 &&
+            boardSettings.hasOwnProperty('rows') &&
+            boardSettings.hasOwnProperty('cols') &&
+            boardSettings.hasOwnProperty('bombs')
+        ) {
+            validObject =  true;
+        }
+
+        let { rows, cols, bombs } = this.state;
+        let reinstantiate;
+
+        if (validObject) {
+            
+            // create new array only if at least one of dimensions was changed
+            if (boardSettings.rows !== rows || boardSettings.cols !== cols) {
+                reinstantiate = true;
+            }
+
+            bombs = boardSettings.bombs;
+        }
+
+        // create new array based on new dimensions OR get existing one from state
+        const arr = reinstantiate ? Array(boardSettings.rows * boardSettings.cols).fill(undefined) : this.state.cells.slice();
         this.initBoard(arr);
 
-        // destroy timer if set
-        this.holdTimer();
-
-        this.setState({
+        const newState = Object.assign({}, this.state, validObject ? boardSettings : {}, {
             cells: arr,
-            bombsLeft: this.state.bombs,
+            bombsLeft: bombs,
             locked: false,
             paused: false,
             finished: false,
             revealed: false,
             timeElapsed: 0
         });
+
+        // destroy timer if set
+        this.holdTimer();
+
+        this.setState(newState);
     }
 
     startTimer() {
@@ -331,34 +280,25 @@ class Game extends React.Component {
         });
     }
 
-    // TODO: better validation approach
+    isNumeric(value) {
+        return !isNaN(value - parseFloat(value));
+    }
+
     updateBoardSettings(data) {
         if (data) {
-            const cols = data['columns'].trim();
-            const rows = data['rows'].trim();
-            const bombs = data['bombs'].trim();
 
-            if (cols.length && !isNaN(cols)) {
-                this.setState({ cols: +cols });
+            let { cols, rows, bombs } = data;
+            if ( !(this.isNumeric(cols) && this.isNumeric(rows) && this.isNumeric(bombs))) {
+                throw Error('Provided arguments are invalid');
             }
 
-            if (rows.length && !isNaN(rows)) {
-                this.setState({ rows: +rows });
+            let newObj = {
+                cols: Number(cols),
+                rows: Number(rows),
+                bombs: Number(bombs)
             }
 
-            if (bombs.length && !isNaN(bombs)) {
-                this.setState({
-                    bombs: +bombs,
-                    bombsLeft: +bombs
-                });
-            }
-
-            // TODO: changes to startInitGame so no need to double initBoard
-            this.setState(prevState => {
-                const arr = Array(prevState.rows * prevState.cols).fill(undefined);
-                this.initBoard(arr);
-                return { cells: arr };
-            }, () => this.startNewGame());
+            this.resetGame(newObj);
         }
     }
 
@@ -405,7 +345,10 @@ class Game extends React.Component {
             }
 
             if (!this.hasBomb(i) && mode === cellState.MARKED_AS_BOMB) {
-                arr[i] = Object.assign({}, arr[i], { cssClass: 'marked-invalid' });
+                arr[i] = Object.assign({}, arr[i], { 
+                    value: this.bombSign,
+                    mode: cellState.VISIBLE, 
+                    cssClass: 'marked-invalid' });
             }
         }
 
@@ -464,8 +407,9 @@ class Game extends React.Component {
     handleLostGame(callback) {
         const msg = 'You have lost the game. Do you want to start a new game?';
         if (window.confirm(msg)) {
-            this.startNewGame();
+            this.resetGame();
         } else if (callback && callback instanceof Function) {
+            // typeof callback === 'function'
             callback();
         }
     }
@@ -473,7 +417,7 @@ class Game extends React.Component {
     // This is a template for won game - show alert and call an additional function if passed
     handleWonGame(callback) {
         alert('You have won the game!');
-        if (callback && callback instanceof Function) {
+        if (callback && typeof callback === Function) {
             callback();
         }
     }
@@ -591,7 +535,6 @@ class Game extends React.Component {
 
             const arr = this.state.cells.slice();
             let isGameLost = false;
-            let cssClass;
             const emptyCells = [];
 
             neighbours.forEach(val => {
@@ -605,17 +548,14 @@ class Game extends React.Component {
 
                         // ...but if it contains a bomb, highlight it and end the game
                         if (this.hasBomb(val)) {
-                            cssClass = 'clicked-bomb';
                             isGameLost = true;
                         }
 
-                        // TODO: concat cssClass
                         arr[val] = Object.assign({}, arr[val], {
                             mode: cellState.VISIBLE,
-                            cssClass: cssClass ? cssClass : ''
+                            cssClass: classNames(
+                                arr[val].cssClass, { 'clicked-bomb': this.hasBomb(val) })
                         });
-
-                        cssClass = '';
                     }
                 }
             });
@@ -670,12 +610,13 @@ class Game extends React.Component {
                         inProgress={this.inProgress()}
                         onSettingsUpdate={data => this.updateBoardSettings(data)} />
                     <ControlPanel
-                        onStartNewGame={this.startNewGame}
+                        onStartNewGame={this.resetGame}
                         onTogglePause={this.togglePause}
                         onToggleReveal={this.toggleReveal}
                         inProgress={this.inProgress()}
                         paused={this.state.paused}
                         revealed={this.state.revealed} />
+                    <VisualPanel />
                 </div>
 
                 <Board cells={this.state.cells}
@@ -686,204 +627,7 @@ class Game extends React.Component {
                     onClick={(index, e) => this.handleClick(index, e)}
                     onDblClick={(index, e) => this.handleDoubleClick(index, e)}
                     onContextMenu={(index, e) => this.handleRightClick(index, e)} />
-
-
             </div>
-        )
-    }
-}
-
-class ControlPanel extends React.Component {
-    render() {
-
-        const pauseButton = this.props.inProgress && <Button onClick={e => this.props.onTogglePause()}>{this.props.paused ? 'Resume game' : 'Pause game'}</Button>;
-        const revealButon = this.props.inProgress && <Button onClick={e => this.props.onToggleReveal()}>{this.props.revealed ? 'Hide cells' : 'Show cells'}</Button>;
-
-        return (
-            <Panel className="control-panel">
-                <Panel.Heading>
-                    <Panel.Title componentClass="h2">Controls</Panel.Title>
-                </Panel.Heading>
-                <Panel.Body>
-                    <Button bsStyle="primary" onClick={e => this.props.onStartNewGame()}>New Game</Button>
-                    {pauseButton}
-                    {revealButon}
-                </Panel.Body>
-            </Panel>
-        )
-    }
-}
-
-const InfoItem = props => {
-
-    let label;
-    if (props.icon) {
-        label = (
-            <span>
-                <Icon src={props.icon} alt={props.alt ? props.alt : ''} />
-                <span>{props.label}:</span>
-            </span>
-        );
-    } else {
-        label = <span>{props.label}:</span>;
-    }
-
-    return (
-        <div className="info-item">
-            {label}
-            <span>{props.value}</span>
-        </div>
-    )
-}
-
-class SettingsModal extends React.Component {
-
-    values;
-
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            columns: "",
-            rows: "",
-            bombs: ""
-        };
-
-        this.close = this.close.bind(this);
-
-        this.handleSubmit = this.handleSubmit.bind(this);
-        this.handleChange = this.handleChange.bind(this);
-    }
-
-    close() {
-        this.props.onModalClose();
-    }
-
-    handleChange(e) {
-        const target = e.target;
-        const value = target.value;
-        const name = target.name;
-
-        this.setState({
-            [name]: value
-        });
-    }
-
-    handleSubmit(e) {
-        e.preventDefault();
-
-        this.props.onModalClose(this.state);
-        this.reset();
-    }
-
-    reset() {
-        this.setState({
-            columns: "",
-            rows: "",
-            bombs: ""
-        });
-    }
-
-    render() {
-        return (
-            <Modal show={this.props.show} onHide={this.close} bsSize="small">
-                <Modal.Header closeButton>
-                    <Modal.Title>Edit board options</Modal.Title>
-                </Modal.Header>
-
-                <Form horizontal onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        <FormGroup controlId="columns" bsSize="sm">
-                            <Col componentClass={ControlLabel} sm={4}>Columns</Col>
-                            <Col sm={8}>
-                                <FormControl type="number" name="columns" value={this.state.cols} placeholder="Insert number of columns" onChange={this.handleChange} />
-                            </Col>
-                        </FormGroup>
-
-                        <FormGroup controlId="rows" bsSize="sm">
-                            <Col componentClass={ControlLabel} sm={4}>Rows</Col>
-                            <Col sm={8}>
-                                <FormControl type="text" name="rows" value={this.state.rows} placeholder="Insert number of rows" onChange={this.handleChange} />
-                            </Col>
-                        </FormGroup>
-
-                        <FormGroup controlId="bombs" bsSize="sm">
-                            <Col componentClass={ControlLabel} sm={4}>Bombs</Col>
-                            <Col sm={8}>
-                                <FormControl type="text" name="bombs" value={this.state.bombs} placeholder="Insert number of bombs" onChange={this.handleChange} />
-                            </Col>
-                        </FormGroup>
-                    </Modal.Body>
-
-                    <Modal.Footer>
-                        <Button onClick={this.close}>Close</Button>
-                        <Button bsStyle="primary" type="submit">Save</Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
-        );
-    }
-}
-
-class InfoPanel extends React.Component {
-
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            show: false
-        }
-
-        this.showSettingsModal = this.showSettingsModal.bind(this);
-    }
-
-    showSettingsModal(e) {
-        e.preventDefault();
-
-        this.setState({
-            show: true
-        });
-    }
-
-    closeSettingsModal(data) {
-        if (data !== undefined) {
-            this.props.onSettingsUpdate(data);
-        }
-
-        this.setState({
-            show: false
-        });
-    }
-
-    render() {
-
-        const tooltip = <Tooltip placement="bottom" className="in" id="disabled-info-tooltip">You can edit only when game has not been started.</Tooltip>;
-        const settingsButton = (
-            <button className="edit-settings-button" onClick={this.showSettingsModal} disabled={this.props.inProgress ? 'disabled' : ''}>
-                <Glyphicon glyph="cog" />
-                <span>Edit settings</span>
-            </button>
-        );
-
-        return (
-            <Panel className="info-panel" bsStyle="info">
-                <Panel.Heading>
-                    <Panel.Title componentClass="h2">Info</Panel.Title>
-                </Panel.Heading>
-                <Panel.Body>
-                    <InfoItem label="Dimensions" value={this.props.cols + 'x' + this.props.rows} />
-                    <InfoItem label="Bombs" value={this.props.bombs} />
-
-                    {this.props.inProgress ? (
-                        <OverlayTrigger placement="bottom" overlay={tooltip}>{settingsButton}</OverlayTrigger>
-                    ) : settingsButton}
-
-                    <InfoItem label="Time" value={this.props.timeElapsed + 's'} icon={timeIcon} alt="Time elapsed" />
-                    <InfoItem label="Bombs left" value={this.props.bombsLeft} icon={bombIcon} alt="Bombs left" />
-
-                    <SettingsModal show={this.state.show} onModalClose={(data) => this.closeSettingsModal(data)} />
-                </Panel.Body>
-            </Panel>
         )
     }
 }

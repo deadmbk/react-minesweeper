@@ -5,8 +5,10 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 import Game from './Game';
 
-const ROWS = 20;
-const COLS = 20;
-const BOMBS = 70;
+const GAME_CONFIG = {
+    rows: 20,
+    cols: 20,
+    bombs: 70
+}
 
-ReactDOM.render(<Game rows={ROWS} cols={COLS} bombs={BOMBS} />, document.getElementById('root'));
+ReactDOM.render(<Game {...GAME_CONFIG} />, document.getElementById('root'));
