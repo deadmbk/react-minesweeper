@@ -1,22 +1,32 @@
 {
-  "name": "react-minesweeper",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "bootstrap": "^3.3.7",
-    "classnames": "^2.2.6",
-    "immutability-helper": "^2.7.1",
-    "react": "^16.4.1",
-    "react-bootstrap": "^0.32.1",
-    "react-bootstrap-slider": "^2.1.5",
-    "react-dom": "^16.4.1",
-    "react-scripts": "1.1.4",
-    "react-slider": "file:../react-slider"
-  },
+  "name": "react-minesweeper-backend",
+  "version": "0.0.1",
+  "description": "This is an API project for react-minesweeper app",
+  "main": "server.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "start": "npm run server",
+    "client": "npm start --prefix client",
+    "server": "nodemon server.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deadmbk/react-minesweeper.git"
+  },
+  "keywords": [
+    "Minesweeper",
+    "React"
+  ],
+  "author": "mbk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/deadmbk/react-minesweeper/issues"
+  },
+  "homepage": "https://github.com/deadmbk/react-minesweeper#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "concurrently": "^3.6.1",
+    "express": "^4.16.3",
+    "mongoose": "^5.2.6"
   }
 }

@@ -198,3 +198,28 @@ body {
 .edit-settings-button:hover {
   color: darkturquoise;
 }
+
+.table-row-won {
+  background-color: #d4edda;
+}
+
+.table-row-lost {
+  background-color: #f8d7da;
+}
+
+.sort-header {
+  cursor: pointer;
+}
+
+.sort-header svg {
+  display: none;
+}
+
+.sort-active svg {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.sort-active.ascending svg {
+  transform: rotate(180deg);
+}

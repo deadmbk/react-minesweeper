@@ -9,6 +9,10 @@ import cellState from '../helpers/cellState';
 class Board extends Component {
 
     renderSingleCell(index) {
+        if (this.props.cells[index] === undefined) {
+            return;
+        }
+
         let { value, mode, cssClass } = this.props.cells[index];
 
         const isBomb = value === this.props.bombSign;
