@@ -6,7 +6,13 @@ import HistoryTable from './components/HistoryTable';
 import HistoryFilters from './components/HistoryFilters';
 import BoardSelect from './components/BoardSelect';
 
-import { addGame, getAllGames, getBoards, getStats } from './services/gameService';
+import { connect } from 'react-redux';
+
+import { getBoardConfigs, changeCurrentBoardConfig } from './actions/boardConfigActions';
+
+import { addGame, getAllGames, getStats } from './services/gameService';
+
+import { convertSettingsToString } from './helpers/utils';
 
 import './App.css';
 
@@ -16,9 +22,21 @@ const GAME_CONFIG = {
   bombs: 70
 }
 
-export default class App extends Component {
+class App extends Component {
 
   defaultSortConfig = { date: 'desc' };
+
+  defaultFilterConfig = {
+    status: '',
+    boardSettings: this.props.currentBoardConfig,
+    noHintsUsed: false
+  }
+
+  defaultStatsConfig = {
+    boardSettings: this.props.currentBoardConfig,
+    gamesLost: 0,
+    gamesWon: 0
+  }
 
   constructor(props) {
     super(props);
@@ -26,19 +44,9 @@ export default class App extends Component {
     this.state = {
       ...GAME_CONFIG,
       history: [],
-      boardSettingsList: [],
-      filters: {
-        status: '',
-        boardSettings: '',
-        noHintsUsed: false
-      },
-      stats: {
-        boardSettings: '',
-        gamesLost: 0,
-        gamesWon: 0
-      },
+      filters: this.defaultFilterConfig,
+      stats: this.defaultStatsConfig,
       sort: this.defaultSortConfig,
-      currentBoardSettings: '',
       tabKey: 1
     }
 
@@ -52,56 +60,39 @@ export default class App extends Component {
   }
 
   componentDidMount() {
-    getBoards()
-      .then(result => this.setState({ boardSettingsList: result }))
-      .catch(err => console.log(err));
-
-    const current = this.getBoardSettingsAsString();
-    this.setState({
-      currentBoardSettings: current,
-      filters: { ...this.state.filters, boardSettings: current }
-    });
+    this.props.getBoardConfigs();
+    this.getStats();
   }
 
   componentDidUpdate(props, state) {
     if (state.filters !== this.state.filters || state.sort !== this.state.sort) {
       this.getHistory();
     }
-
-    if (state.currentBoardSettings !== this.state.currentBoardSettings) {
-      this.getStats(this.state.currentBoardSettings);
-    }
-  }
-
-  getBoardSettingsAsString() {
-    return `${this.state.rows}x${this.state.cols}x${this.state.bombs}`;
   }
 
   resetFilters() {
-    const initFilters = {
-      boardSettings: this.getBoardSettingsAsString(),
-      status: '',
-      noHintsUsed: false
-    }
-
     this.setState({
-      filters: initFilters,
+      filters: {
+        ...this.defaultFilterConfig,
+        boardSettings: this.props.currentBoardConfig
+      },
       sort: this.defaultSortConfig
     });
   }
 
   getStats(boardSettings) {
+    if (boardSettings === undefined) {
+      boardSettings = this.props.currentBoardConfig;
+    }
 
     const searchParams = {};
-    if (boardSettings && boardSettings !== '') {
+    if (boardSettings !== '') {
       Object.assign(searchParams, { boardSettings: boardSettings });
     }
 
     getStats(searchParams)
       .then(result => {
-        console.log(result);
-
-        const stats = { boardSettings: boardSettings, gamesLost: 0, gamesWon: 0 };
+        const stats = { ...this.defaultStatsConfig, boardSettings: boardSettings };
         result.forEach(item => {
 
           if (item._id.status === 'L') {
@@ -113,7 +104,6 @@ export default class App extends Component {
           }
         });
 
-        console.log(stats);
         this.setState({
           stats: stats
         });
@@ -159,7 +149,6 @@ export default class App extends Component {
   }
 
   handleFilterChange(filterEntry) {
-
     const newFilters = { ...this.state.filters, ...filterEntry };
     this.setState({
       filters: newFilters
@@ -171,9 +160,12 @@ export default class App extends Component {
 
     if (key === 2) {
       this.resetFilters();
+    } else if (key === 3) {
+      this.getStats();
     }
   }
 
+  // TODO: move it to Game
   handleBoardSettingsUpdate(data) {
     if (data) {
 
@@ -188,25 +180,17 @@ export default class App extends Component {
         bombs: Number(bombs)
       }
 
-      this.setState(newObj, () => {
-        const settings = this.getBoardSettingsAsString();
-        const settingsList = this.state.boardSettingsList.slice();
-        if (!settingsList.includes(settings)) {
-          settingsList.push(settings);
-        }
+      const settings = convertSettingsToString(newObj);
+      this.props.changeCurrentBoardConfig(settings);
 
-        this.setState({
-          currentBoardSettings: settings,
-          boardSettingsList: settingsList
-        });
-      });
+      this.setState(newObj);
     }
   }
 
   handleFinishedGame(gameStats) {
     const game = {
       ...gameStats,
-      boardSettings: this.state.currentBoardSettings
+      boardSettings: this.props.currentBoardConfig
     }
 
     addGame(game)
@@ -239,62 +223,71 @@ export default class App extends Component {
     const gamesLost = this.state.stats.gamesLost;
 
     return (
-      <Tabs
-        activeKey={this.state.tabKey}
-        onSelect={this.handleTabSelection}
-        id="app-tabs">
-        <Tab
-          eventKey={1}
-          title="Game">
-          <Game
-            rows={this.state.rows}
-            cols={this.state.cols}
-            bombs={this.state.bombs}
-            onFinishedGame={this.handleFinishedGame}
-            onSettingsUpdate={this.handleBoardSettingsUpdate} />
-        </Tab>
-        <Tab
-          eventKey={2}
-          title="History">
-          <HistoryFilters
-            onFilterChange={this.handleFilterChange}
-            filters={this.state.filters}
-            boardSettingsList={this.state.boardSettingsList}
-            currentBoardSettings={this.state.currentBoardSettings} />
-          <div>Result found: {this.state.history.length}</div>
-          {
-            !this.state.history.length &&
-            <span className="no-results">No results found.</span>
-          }
-          {
-            this.state.history.length !== 0 &&
-            <HistoryTable
-              history={this.state.history}
-              onSort={this.handleSort}
-              sort={this.state.sort} />
-          }
-        </Tab>
-        <Tab
-          eventKey={3}
-          title="Stats">
+        <Tabs
+          activeKey={this.state.tabKey}
+          onSelect={this.handleTabSelection}
+          id="app-tabs">
+          <Tab
+            eventKey={1}
+            title="Game">
+            <Game
+              rows={this.state.rows}
+              cols={this.state.cols}
+              bombs={this.state.bombs}
+              onFinishedGame={this.handleFinishedGame}
+              onSettingsUpdate={this.handleBoardSettingsUpdate} />
+          </Tab>
+          <Tab
+            eventKey={2}
+            title="History">
+            <HistoryFilters
+              onFilterChange={this.handleFilterChange}
+              filters={this.state.filters} />
+            <div>Result found: {this.state.history.length}</div>
+            {
+              !this.state.history.length &&
+              <span className="no-results">No results found.</span>
+            }
+            {
+              this.state.history.length !== 0 &&
+              <HistoryTable
+                history={this.state.history}
+                onSort={this.handleSort}
+                sort={this.state.sort} />
+            }
+          </Tab>
+          <Tab
+            eventKey={3}
+            title="Stats">
 
-          <div>
+            <div>
 
-            <BoardSelect 
-              list={this.state.boardSettingsList} 
-              current={this.state.currentBoardSettings} 
-              value={this.state.stats.boardSettings} 
-              onValueChange={this.handleBoardSelectChange} />
+              <BoardSelect
+                value={this.state.stats.boardSettings}
+                onValueChange={this.handleBoardSelectChange} />
 
-            <div>Games played: {gamesPlayed}</div>
-            <div>Games won: {gamesWon}</div>
-            <div>Games lost: {gamesLost}</div>
+              <div>Games played: {gamesPlayed}</div>
+              <div>Games won: {gamesWon}</div>
+              <div>Games lost: {gamesLost}</div>
 
-            <div>Games won (percentage): {(gamesWon * 100 / gamesPlayed).toFixed(2)}%</div>
-          </div>
+              <div>Games won (percentage): {(gamesWon * 100 / gamesPlayed).toFixed(2)}%</div>
+            </div>
 
-        </Tab>
-      </Tabs>
+          </Tab>
+        </Tabs>
     )
   }
 }
+
+const mapStateToProps = state => {
+  return {
+    currentBoardConfig: state.boardConfig.currentBoardConfig
+  }
+};
+
+const mapDispatchToProps = dispatch => ({
+  getBoardConfigs: () => dispatch(getBoardConfigs()),
+  changeCurrentBoardConfig: boardConfig => dispatch(changeCurrentBoardConfig(boardConfig))
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);

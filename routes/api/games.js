@@ -91,6 +91,23 @@ router.get('/stats', (req, res, next) => {
     });
 });
 
+router.get('/popular-boards', (req, res, next) => {
+
+    const limit = Number(req.query.limit) || 3;
+
+    Game.aggregate([
+        { $group: { _id: { boardSettings: '$boardSettings' }, count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: limit }
+    ], (err, result) => {
+        if (err) {
+            next(err);
+        } else {
+            res.json(result);
+        }
+    });
+})
+
 router.get('/boards', (req, res, next) => {
 
     Game.distinct('boardSettings')

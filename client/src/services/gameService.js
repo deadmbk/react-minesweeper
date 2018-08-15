@@ -48,6 +48,17 @@ export const getBoards = () => {
         .then(response => response.json());
 }
 
+export const getPopularBoards = searchCriteria => {
+    
+    let queryParams = '';
+    if (typeof searchCriteria === 'object') {
+        queryParams = '?' + querystring.stringify(searchCriteria);
+    }
+
+    return fetch(api + '/popular-boards' + queryParams)
+        .then(response => response.json());
+}
+
 export const getStats = searchCriteria => {
 
     let queryParams = '';

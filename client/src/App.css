@@ -176,8 +176,15 @@ body {
   margin-top: 8px;
 }
 
+.board-settings-wrapper {
+  display: flex;
+  margin: 24px 0;
+}
+
+
 .edit-settings-button {
-  margin-top: 4px;
+  flex-shrink: 0;
+  margin-left: 16px;
   padding: 6px 0;
   border: none;
   font-size: 0.9em;
@@ -197,6 +204,10 @@ body {
 
 .edit-settings-button:hover {
   color: darkturquoise;
+}
+
+.tab-content {
+  padding: 16px 24px;
 }
 
 .table-row-won {

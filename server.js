@@ -20,7 +20,7 @@ app.use( (error, req, res, next) => {
 });
 
 // Provide your address
-const mongoAddr = '';
+const mongoAddr = 'mongodb://localhost:27017/minesweeper';
 
 mongoose.connect(mongoAddr, { useNewUrlParser: true }).then(
     () => { console.log('Connection with MongoDB has been established...') }, 

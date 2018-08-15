@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import { FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 
-export default class BoardSelect extends Component {
+import { connect } from 'react-redux';
+
+class BoardSelect extends Component {
 
   handleChange(event) {
     const filter = {
@@ -18,10 +20,10 @@ export default class BoardSelect extends Component {
           <FormControl componentClass="select" name="boardSettings" value={this.props.value} onChange={this.handleChange.bind(this)}>
             <option value="">All configurations</option>
             {
-              this.props.list.map(item => {
+              this.props.boardConfig.boardConfigs.map(item => {
                 return (
                   <option key={item} value={item}>
-                    {item === this.props.current ? `${item} (current configuration)` : item}
+                    {item === this.props.boardConfig.currentBoardConfig ? `${item} (current configuration)` : item}
                   </option>
                 )
               })
@@ -31,3 +33,9 @@ export default class BoardSelect extends Component {
     )
   }
 }
+
+const mapStateToProps = state => ({
+  boardConfig: state.boardConfig
+})
+
+export default connect(mapStateToProps)(BoardSelect);
