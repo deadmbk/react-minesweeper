@@ -5,9 +5,7 @@ import {
     Glyphicon,
     Tooltip,
     OverlayTrigger,
-    FormGroup,
-    FormControl,
-    ControlLabel
+    FormControl
 } from 'react-bootstrap';
 
 import InfoItem from './InfoItem';
@@ -123,13 +121,7 @@ class InfoPanel extends Component {
                         <OverlayTrigger placement="bottom" overlay={tooltip}>{settingsButton}</OverlayTrigger>
                     ) : settingsButton}
                     </div>
-                    {/* <FormGroup controlId="formControlsSelect"> */}
-                        {/* <ControlLabel>Choose predefined config</ControlLabel> */}
-                        
-                    {/* </FormGroup> */}
-
                     
-
                     <InfoItem label="Time" value={this.props.timeElapsed + 's'} src={timeIcon} alt="Time elapsed" />
                     <InfoItem label="Bombs left" value={this.props.bombsLeft} src={bombIcon} alt="Bombs left" />
 

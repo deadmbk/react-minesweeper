@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Form, FormGroup, ControlLabel, FormControl, Checkbox, ToggleButtonGroup, ToggleButton } from 'react-bootstrap';
+import { Form, Checkbox, ToggleButtonGroup, ToggleButton } from 'react-bootstrap';
 
 import BoardSelect from './BoardSelect';
 
@@ -9,6 +9,7 @@ class HistoryFilters extends Component {
     super(props);
 
     this.handleChange = this.handleChange.bind(this);
+    this.handleToggleButtonChange = this.handleToggleButtonChange.bind(this);
   }
 
   handleChange(event) {
@@ -19,23 +20,18 @@ class HistoryFilters extends Component {
     this.props.onFilterChange(filter);
   }
 
+  handleToggleButtonChange(event) {
+    this.props.onFilterChange({ status: event });
+  }
+
   render() {
     return (
       <Form>
-        <ToggleButtonGroup type="radio" name="options" defaultValue={1}>
+        <ToggleButtonGroup type="radio" name="status" value={this.props.filters.status} onChange={this.handleToggleButtonChange}>
           <ToggleButton value="">All games</ToggleButton>
           <ToggleButton value="w">Won</ToggleButton>
           <ToggleButton value="l">Lost</ToggleButton>
         </ToggleButtonGroup>
-
-        <FormGroup controlId="statusSelect">
-          <ControlLabel>Status</ControlLabel>
-          <FormControl componentClass="select" name="status" value={this.props.filters.status} onChange={this.handleChange}>
-            <option value="">All games</option>
-            <option value="w">Won</option>
-            <option value="l">Lost</option>
-          </FormControl>
-        </FormGroup>
 
         <BoardSelect
           value={this.props.filters.boardSettings}

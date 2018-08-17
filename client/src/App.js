@@ -24,19 +24,21 @@ const GAME_CONFIG = {
 
 class App extends Component {
 
-  defaultSortConfig = { date: 'desc' };
+  defaultSortConfig = {
+    date: 'desc'
+  };
 
   defaultFilterConfig = {
     status: '',
     boardSettings: this.props.currentBoardConfig,
     noHintsUsed: false
-  }
+  };
 
   defaultStatsConfig = {
     boardSettings: this.props.currentBoardConfig,
     gamesLost: 0,
     gamesWon: 0
-  }
+  };
 
   constructor(props) {
     super(props);
@@ -114,30 +116,29 @@ class App extends Component {
   getHistory() {
     const filters = { ...this.state.filters };
 
-    // Remove all empty filters
-    Object.keys(filters).forEach(key => {
-      if (!filters[key] || filters[key] === undefined || filters[key] === '') {
-        delete filters[key];
-      }
-    });
-
-    if (filters['noHintsUsed']) {
-      delete filters['noHintsUsed'];
-      Object.assign(filters, {
-        hintsUsed: 0
-      })
+    // Empty status - get games with any status
+    if (filters.status === '') {
+      delete filters['status'];
     }
 
-    const searchParams = { ...filters };
-
-    // Prepare sort query
-    if (this.state.sort) {
-
-      // Add sort object to searchParams
-      Object.assign(searchParams, {
-        sort: { ...this.state.sort }
-      });
+    // Empty settings - get games with any settings
+    if (filters.boardSettings === '') {
+      delete filters['boardSettings'];
     }
+
+    // If noHintsUsed is checked then get all games which have field hintsUsed == 0
+    if (filters.noHintsUsed) {
+      Object.assign(filters, { hintsUsed: 0 });
+    }
+
+    // Delete this entry since API does not use it
+    delete filters['noHintsUsed'];
+
+    // Combine filters and sort into search params
+    const searchParams = {
+      ...filters,
+      sort: { ...this.state.sort }
+    };
 
     getAllGames(searchParams)
       .then(games => this.setState({ history: games }))
@@ -223,58 +224,60 @@ class App extends Component {
     const gamesLost = this.state.stats.gamesLost;
 
     return (
-        <Tabs
-          activeKey={this.state.tabKey}
-          onSelect={this.handleTabSelection}
-          id="app-tabs">
-          <Tab
-            eventKey={1}
-            title="Game">
-            <Game
-              rows={this.state.rows}
-              cols={this.state.cols}
-              bombs={this.state.bombs}
-              onFinishedGame={this.handleFinishedGame}
-              onSettingsUpdate={this.handleBoardSettingsUpdate} />
-          </Tab>
-          <Tab
-            eventKey={2}
-            title="History">
-            <HistoryFilters
-              onFilterChange={this.handleFilterChange}
-              filters={this.state.filters} />
-            <div>Result found: {this.state.history.length}</div>
-            {
-              !this.state.history.length &&
-              <span className="no-results">No results found.</span>
-            }
-            {
-              this.state.history.length !== 0 &&
-              <HistoryTable
-                history={this.state.history}
-                onSort={this.handleSort}
-                sort={this.state.sort} />
-            }
-          </Tab>
-          <Tab
-            eventKey={3}
-            title="Stats">
+      <Tabs
+        activeKey={this.state.tabKey}
+        onSelect={this.handleTabSelection}
+        id="app-tabs">
+        <Tab
+          eventKey={1}
+          title="Game">
+          <Game
+            rows={this.state.rows}
+            cols={this.state.cols}
+            bombs={this.state.bombs}
+            onFinishedGame={this.handleFinishedGame}
+            onSettingsUpdate={this.handleBoardSettingsUpdate} />
 
-            <div>
+          <div>Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+        </Tab>
+        <Tab
+          eventKey={2}
+          title="History">
+          <HistoryFilters
+            onFilterChange={this.handleFilterChange}
+            filters={this.state.filters} />
+          <div>Result found: {this.state.history.length}</div>
+          {
+            !this.state.history.length &&
+            <span className="no-results">No results found.</span>
+          }
+          {
+            this.state.history.length !== 0 &&
+            <HistoryTable
+              history={this.state.history}
+              onSort={this.handleSort}
+              sort={this.state.sort} />
+          }
+        </Tab>
+        <Tab
+          eventKey={3}
+          title="Stats">
 
-              <BoardSelect
-                value={this.state.stats.boardSettings}
-                onValueChange={this.handleBoardSelectChange} />
+          <div>
 
-              <div>Games played: {gamesPlayed}</div>
-              <div>Games won: {gamesWon}</div>
-              <div>Games lost: {gamesLost}</div>
+            <BoardSelect
+              value={this.state.stats.boardSettings}
+              onValueChange={this.handleBoardSelectChange} />
 
-              <div>Games won (percentage): {(gamesWon * 100 / gamesPlayed).toFixed(2)}%</div>
-            </div>
+            <div>Games played: {gamesPlayed}</div>
+            <div>Games won: {gamesWon}</div>
+            <div>Games lost: {gamesLost}</div>
 
-          </Tab>
-        </Tabs>
+            <div>Games won (percentage): {(gamesWon * 100 / gamesPlayed).toFixed(2)}%</div>
+          </div>
+
+        </Tab>
+      </Tabs>
     )
   }
 }

@@ -16,7 +16,6 @@ const initialState = {
 function boardConfig(state = initialState, action) {
   switch (action.type) {
     case GET_BOARD_CONFIGS:
-    console.log(state)
       return {
         ...state,
         boardConfigs: action.payload

@@ -309,7 +309,6 @@ class Game extends Component {
 
       mode = arr[i].mode;
 
-      // TODO: if game is won, bombs are not revealed
       if (this.hasBomb(i) && mode !== cellState.MARKED_AS_BOMB) {
         arr[i] = Object.assign({}, arr[i], { mode: cellState.VISIBLE });
       }
@@ -405,7 +404,7 @@ class Game extends Component {
     this.props.onFinishedGame(game);
 
     alert('You have won the game!');
-    if (callback && typeof callback === Function) {
+    if (callback && typeof callback === 'function') {
       callback();
     }
   }
