@@ -3,62 +3,78 @@ const router = express.Router();
 
 const Game = require('../../models/Game');
 
+const GAMES_FILTER_FIELDS = ['hints', 'status', 'boardSettings', 'player', 'date'];
+const STATS_FILTER_FIELDS = ['boardSettings'];
+
+// -------------------------------
+const prepareFilter = (queryParams, whitelist) => {
+    const filtered = {};
+    
+    // NOTE: case sensitive keys
+    Object.keys(queryParams).forEach(key => {
+
+        let value = queryParams[key];
+        if (value && whitelist.includes(key)) {
+
+            // Nested objects should contain MongoDB operators (ex gt, lt, in).
+            // They need to be prefixed with '$' sign for Mongo to recognize them.
+            if (typeof value === 'object' && !Array.isArray(value)) {
+                const nested = {};
+                const prefix = '$';
+
+                Object.keys(value).forEach(nestedKey => {
+                    Object.assign(nested, {
+                        [prefix + nestedKey]: value[nestedKey]
+                    })
+                });
+
+                value = nested;
+            }
+
+            Object.assign(filtered, {
+                [key]: value
+            });
+        }
+    });
+
+    console.log('createFilter', filtered);
+    return filtered;
+};
+
+// -------------------------------------------------
+// NOTE: it cannot handle sortQuery as object
+const prepareSort = (sortQuery, defaultSort) => sortQuery ? Array.isArray(sortQuery) ? sortQuery.join(' ') : sortQuery : defaultSort;
+
+// -------------------------------------------------
+// NOTE: works only for string and object (not array)
+const prepareDate = date => {
+    const convert = d => new Date(d).toISOString();
+
+    if (typeof date === 'object') {
+        const obj = {};
+
+        Object.keys(date).forEach(key => {
+            Object.assign(obj, {
+                [key]: convert(date[key])
+            });
+        });
+
+        return obj;
+    }
+
+    return convert(date);
+};
+
+// ----------------------------------------------------------------------
 // @route   GET api/games
 // @desc    Get all games
 // @access  Public
 router.get('/', (req, res, next) => {
+    const queryParams = prepareFilter(req.query, GAMES_FILTER_FIELDS);
+    const sort = prepareSort(req.query.sort, '-date');
 
-    const queryParams = {};
-    const sortQuery = req.query.sort;
-    let sort = { date: -1 };
-
-    if (sortQuery !== undefined) {
-        
-        sort = {};
-
-        sortQuery.split(',').forEach(element => {
-            const sortParts = element.split(':');
-
-            const sortField = sortParts[0].toLowerCase().trim();
-            let sortOrder;
-
-            if (sortParts.length === 1) {
-                sortOrder = 1;
-            } else {
-                const sortValue = sortParts[1].toLowerCase().trim();
-                
-                switch (sortValue) {
-                    case 'asc':
-                        sortOrder = 1;
-                        break;
-                    case 'desc':
-                        sortOrder = -1;
-                        break;
-                    default:
-                        return;
-                }
-            }
-
-            Object.assign(sort, 
-                { [sortField]: sortOrder }
-            );
-        });
-    }
-
-    if (req.query.hintsUsed !== undefined) {
-        Object.assign(queryParams, { hintsUsed: req.query.hintsUsed });
-    }
-
-    if (req.query.status !== undefined) {
-        Object.assign(queryParams, { status: req.query.status });
-    }
-
-    if (req.query.player !== undefined) {
-        Object.assign(queryParams, { player: req.query.player });
-    }
-
-    if (req.query.boardSettings !== undefined) {
-        Object.assign(queryParams, { boardSettings: req.query.boardSettings });
+    if (queryParams.date) {
+        Object.assign(queryParams, { date: prepareDate(queryParams.date) });
     }
 
     Game.find(queryParams)
@@ -72,12 +88,11 @@ router.get('/', (req, res, next) => {
     });
 });
 
+// @route   GET api/games/stats
+// @desc    Get stats
+// @access  Public
 router.get('/stats', (req, res, next) => {
-
-    const queryParams = {};
-    if (req.query.boardSettings !== undefined) {
-        Object.assign(queryParams, { boardSettings: req.query.boardSettings });
-    }
+    const queryParams = prepareFilter(req.query, STATS_FILTER_FIELDS);
 
     Game.aggregate([
         { $match: queryParams },
@@ -91,8 +106,10 @@ router.get('/stats', (req, res, next) => {
     });
 });
 
+// @route   GET api/games/popular-boards
+// @desc    Get the most popular played boards
+// @access  Public
 router.get('/popular-boards', (req, res, next) => {
-
     const limit = Number(req.query.limit) || 3;
 
     Game.aggregate([
@@ -108,26 +125,17 @@ router.get('/popular-boards', (req, res, next) => {
     });
 })
 
+// @route   GET api/games/boards
+// @desc    Get all board settings
+// @access  Public
 router.get('/boards', (req, res, next) => {
 
     Game.distinct('boardSettings')
         .then(result => res.json(result))
         .catch(err => next(Err));
-
-    // Game.aggregate([
-    //     {
-    //         $group: { _id: '$boardSettings'}
-    //     }
-    // ], (err, result) => {
-    //     if (err) {
-    //         next(err);
-    //     } else {
-    //         res.json(result);
-    //     }
-    // })
 });
 
-// @route   POST api/games/
+// @route   POST api/games
 // @desc    Add a new game
 // @access  Public
 router.post('/', (req, res, next) => {

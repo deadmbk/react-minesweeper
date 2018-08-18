@@ -58,7 +58,7 @@ class HistoryTable extends Component {
                   <td>{new Date(item.date).toLocaleString()}</td>
                   <td>{item.boardSettings}</td>
                   <td>{item.player}</td>
-                  <td>{item.hintsUsed}</td>
+                  <td>{item.hints}</td>
                   <td>{item.time}s</td>
                   <td>{this.getFullStatus(item.status)}</td>
                 </tr>

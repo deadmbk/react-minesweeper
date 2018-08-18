@@ -107,3 +107,81 @@
 
         this.setState(newState);
     }
+
+    // routes/api/games
+        const sortQuery = req.query.sort;
+    let sort = { date: -1 };
+
+    if (sortQuery) {
+        sort = Array.isArray(sortQuery) ? sortQuery.join(' ') : sortQuery;
+    }
+
+    
+    const sort = sortQuery ? Array.isArray(sortQuery) ? sortQuery.join(' ') : sortQuery : '-date';
+
+    if (Array.isArray(sortQuery)) {
+        sort = sortQuery.join(' ');
+    } else {
+        sort = sortQuery;
+    }
+
+    
+    return res.json(req.query);
+
+    if (sortQuery !== undefined) {
+        
+        sort = {};
+
+        sortQuery.split(',').forEach(element => {
+            const sortParts = element.split(':');
+
+            const sortField = sortParts[0].toLowerCase().trim();
+            let sortOrder;
+
+            if (sortParts.length === 1) {
+                sortOrder = 1;
+            } else {
+                const sortValue = sortParts[1].toLowerCase().trim();
+                
+                switch (sortValue) {
+                    case 'asc':
+                        sortOrder = 1;
+                        break;
+                    case 'desc':
+                        sortOrder = -1;
+                        break;
+                    default:
+                        return;
+                }
+            }
+
+            Object.assign(sort, 
+                { [sortField]: sortOrder }
+            );
+        });
+    }
+
+    // gameService
+    // // TODO: this probably can be done recursively
+        // queryParams = Object.keys(searchCriteria).map(key => {
+        //     if (typeof searchCriteria[key] === 'object') {
+                
+        //         // Nested objects are translated to key:value,key:value substring
+        //         // ex player=JohnDoe&sort=player,date:asc
+        //         const nestedParams = Object.keys(searchCriteria[key]).map(nestedKey => {
+        //             return `${nestedKey}:${searchCriteria[key][nestedKey]}`;
+        //         });
+
+        //         return key + '=' + nestedParams.join(',');
+        //     } else {
+        //         return `${key}=${searchCriteria[key]}`;
+        //     }
+        // });
+        // 
+        // queryParams = '?' + queryParams.join('&');
+
+            // const sort = this.state.sort;
+    // const order = sort !== null && sort.hasOwnProperty(column) ? sort[column] === 'asc' ? 'desc' : 'asc' : 'asc';
+    // const newSort = { [column]: order };
+
+    // this.setState({ sort: newSort });

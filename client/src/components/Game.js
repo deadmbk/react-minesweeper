@@ -34,7 +34,7 @@ class Game extends Component {
       finished: false,
       revealed: false, // debugging purposes
       timeElapsed: 0,
-      hintsUsed: 0
+      hints: 0
     };
 
     this.revealBombs = this.revealBombs.bind(this);
@@ -240,11 +240,11 @@ class Game extends Component {
 
   toggleReveal() {
     const revealed = this.state.revealed;
-    const hints = this.state.hintsUsed;
+    const hints = this.state.hints;
 
     this.setState({
       revealed: !revealed,
-      hintsUsed: !revealed ? hints + 1 : hints
+      hints: !revealed ? hints + 1 : hints
     });
   }
 
@@ -377,7 +377,7 @@ class Game extends Component {
     return {
       status: status,
       time: this.state.timeElapsed,
-      hintsUsed: this.state.hintsUsed,
+      hints: this.state.hints,
       player: 'mbk' // TODO: make input for player
     }
   }
@@ -494,7 +494,8 @@ class Game extends Component {
       matches value in clicked cell. If any of cells contains a bomb AND was not marked as such, the game is lost. 
       In this case, the cell is highlighted. Cells that have been marked as bombs incorrectly are also highlighted (different way).
   */
- // TODO: if neighour is empty cell, it is not revealed (sometimes)
+  // TODO: if neighbour is empty cell, it is not revealed (sometimes)
+  // TODO: if neighbour is ? mark cell is not revealed
   handleDoubleClick(index) {
     const { value, mode } = this.state.cells[index];
 

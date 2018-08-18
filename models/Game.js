@@ -12,7 +12,7 @@ const gameSchema = new mongoose.Schema({
         type: Date, 
         default: Date.now
     },
-    hintsUsed: {
+    hints: {
         type: Number,
         min: 0,
         default: 0

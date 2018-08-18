@@ -24,14 +24,17 @@ const GAME_CONFIG = {
 
 class App extends Component {
 
-  defaultSortConfig = {
-    date: 'desc'
-  };
+  defaultSortConfig = '-date';
 
   defaultFilterConfig = {
     status: '',
     boardSettings: this.props.currentBoardConfig,
-    noHintsUsed: false
+    noHintsUsed: false,
+    date: {
+      from: '',
+      to: '',
+      value: ''
+    }
   };
 
   defaultStatsConfig = {
@@ -126,9 +129,21 @@ class App extends Component {
       delete filters['boardSettings'];
     }
 
+    // Filter by date
+    const date = {};
+    if (filters.date.from !== '') {
+      Object.assign(date, { gte: new Date(filters.date.from).toISOString() });
+    }
+
+    if (filters.date.to !== '') {
+      Object.assign(date, { lte: new Date(filters.date.to).toISOString() });
+    }
+
+    filters.date = date;
+
     // If noHintsUsed is checked then get all games which have field hintsUsed == 0
     if (filters.noHintsUsed) {
-      Object.assign(filters, { hintsUsed: 0 });
+      Object.assign(filters, { hints: 0 });
     }
 
     // Delete this entry since API does not use it
@@ -137,7 +152,7 @@ class App extends Component {
     // Combine filters and sort into search params
     const searchParams = {
       ...filters,
-      sort: { ...this.state.sort }
+      sort: this.state.sort
     };
 
     getAllGames(searchParams)
@@ -206,12 +221,9 @@ class App extends Component {
       .catch(err => console.log('Error has occured', err));
   }
 
-  handleSort(column) {
-    const sort = this.state.sort;
-    const order = sort !== null && sort.hasOwnProperty(column) ? sort[column] === 'asc' ? 'desc' : 'asc' : 'asc';
-    const newSort = { [column]: order };
-
-    this.setState({ sort: newSort });
+  handleSort(column) {  
+    const sort = column === this.state.sort ? '-' + column : column;
+    this.setState({sort});
   }
 
   handleBoardSelectChange(board) {
