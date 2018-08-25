@@ -1,10 +1,17 @@
 import React, { Component } from 'react';
-import { Form, FormGroup, FormControl, ControlLabel, Checkbox, ToggleButtonGroup, ToggleButton } from 'react-bootstrap';
+import {
+  Form,
+  FormGroup,
+  FormControl,
+  ControlLabel,
+  Checkbox,
+  ToggleButtonGroup,
+  ToggleButton
+} from 'react-bootstrap';
 
 import BoardSelect from './BoardSelect';
 
 class HistoryFilters extends Component {
-
   constructor(props) {
     super(props);
 
@@ -15,7 +22,10 @@ class HistoryFilters extends Component {
 
   handleChange(event) {
     const filter = {
-      [event.target.name]: event.target.type === 'checkbox' ? event.target.checked : event.target.value
+      [event.target.name]:
+        event.target.type === 'checkbox'
+          ? event.target.checked
+          : event.target.value
     };
 
     this.props.onFilterChange(filter);
@@ -46,7 +56,7 @@ class HistoryFilters extends Component {
     }
 
     const filter = {
-      [event.target.name]: { 
+      [event.target.name]: {
         from,
         to,
         value
@@ -59,7 +69,11 @@ class HistoryFilters extends Component {
   render() {
     return (
       <Form>
-        <ToggleButtonGroup type="radio" name="status" value={this.props.filters.status} onChange={this.handleToggleButtonChange}>
+        <ToggleButtonGroup
+          type="radio"
+          name="status"
+          value={this.props.filters.status}
+          onChange={this.handleToggleButtonChange}>
           <ToggleButton value="">All games</ToggleButton>
           <ToggleButton value="w">Won</ToggleButton>
           <ToggleButton value="l">Lost</ToggleButton>
@@ -67,11 +81,16 @@ class HistoryFilters extends Component {
 
         <BoardSelect
           value={this.props.filters.boardSettings}
-          onValueChange={v => this.props.onFilterChange(v)} />
+          onValueChange={v => this.props.onFilterChange(v)}
+        />
 
         <FormGroup>
           <ControlLabel>Date</ControlLabel>
-          <FormControl componentClass="select" name="date" value={this.props.filters.date.value} onChange={this.handleDateChange}>
+          <FormControl
+            componentClass="select"
+            name="date"
+            value={this.props.filters.date.value}
+            onChange={this.handleDateChange}>
             <option value="">Any time</option>
             <option value="last-day">Last day</option>
             <option value="last-week">Last week</option>
@@ -79,7 +98,12 @@ class HistoryFilters extends Component {
           </FormControl>
         </FormGroup>
 
-        <Checkbox name="noHintsUsed" checked={this.props.filters.noHintsUsed} onChange={this.handleChange}>No hints used</Checkbox>
+        <Checkbox
+          name="noHintsUsed"
+          checked={this.props.filters.noHintsUsed}
+          onChange={this.handleChange}>
+          No hints used
+        </Checkbox>
       </Form>
     );
   }

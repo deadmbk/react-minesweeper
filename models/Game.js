@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate');
 
 const gameSchema = new mongoose.Schema({
     boardSettings: {
@@ -33,6 +34,8 @@ const gameSchema = new mongoose.Schema({
         required: true
     },
 });
+
+gameSchema.plugin(mongoosePaginate);
 
 const Game = mongoose.model('Game', gameSchema);
 module.exports = Game;
